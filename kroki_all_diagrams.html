@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kroki.io Diagram Examples - All Formats</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+        
+        .diagram-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .diagram-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            background: #fafafa;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .diagram-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .diagram-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .diagram-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #34495e;
+        }
+        
+        .diagram-type {
+            background: #3498db;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        
+        .diagram-content {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+        }
+        
+        .diagram-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .loading {
+            color: #95a5a6;
+            font-style: italic;
+        }
+        
+        .error {
+            color: #e74c3c;
+            padding: 10px;
+            background: #fadbd8;
+            border-radius: 4px;
+        }
+        
+        .code-section {
+            margin-top: 10px;
+        }
+        
+        .code-header {
+            background: #34495e;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px 4px 0 0;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .code-header:hover {
+            background: #2c3e50;
+        }
+        
+        .code-content {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 0 0 4px 4px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            white-space: pre-wrap;
+            display: none;
+        }
+        
+        .code-content.show {
+            display: block;
+        }
+        
+        .stats {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .stats-item {
+            display: inline-block;
+            margin: 0 20px;
+        }
+        
+        .stats-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .stats-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .diagram-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Kroki.io Diagram Examples</h1>
+        <p class="subtitle">A comprehensive showcase of all diagram formats supported by Kroki.io</p>
+        
+        <div class="stats">
+            <div class="stats-item">
+                <div class="stats-number" id="total-count">27</div>
+                <div class="stats-label">Total Diagram Types</div>
+            </div>
+            <div class="stats-item">
+                <div class="stats-number" id="loaded-count">0</div>
+                <div class="stats-label">Loaded</div>
+            </div>
+        </div>
+        
+        <div class="diagram-grid" id="diagram-grid"></div>
+    </div>
+
+    <script>
+        // Encode diagram text for Kroki URL (deflate + base64)
+        function pako_deflate(str) {
+            // Using a simple base64 encoding approach for demonstration
+            // In production, you'd want to use pako library for proper deflate+base64
+            return btoa(str);
+        }
+
+        const diagrams = {
+            'PlantUML': {
+                type: 'plantuml',
+                code: `@startuml
+Alice -> Bob: Hello
+Bob -> Alice: Hi!
+@enduml`
+            },
+            'Mermaid': {
+                type: 'mermaid',
+                code: `graph TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[OK]
+    B -->|No| D[Cancel]`
+            },
+            'GraphViz': {
+                type: 'graphviz',
+                code: `digraph G {
+    rankdir=LR;
+    A -> B -> C;
+    B -> D;
+}`
+            },
+            'BlockDiag': {
+                type: 'blockdiag',
+                code: `blockdiag {
+    A -> B -> C;
+    B -> D;
+}`
+            },
+            'SeqDiag': {
+                type: 'seqdiag',
+                code: `seqdiag {
+    browser -> webserver [label = "GET /"];
+    webserver -> database [label = "SELECT"];
+    database --> webserver;
+    webserver --> browser;
+}`
+            },
+            'ActDiag': {
+                type: 'actdiag',
+                code: `actdiag {
+    write -> convert -> image;
+    lane user {
+        label = "User"
+        write [label = "Write"];
+        image [label = "Get image"];
+    }
+    lane Kroki {
+        convert [label = "Convert"];
+    }
+}`
+            },
+            'NwDiag': {
+                type: 'nwdiag',
+                code: `nwdiag {
+    network dmz {
+        web01;
+        web02;
+    }
+    network internal {
+        web01;
+        db01;
+    }
+}`
+            },
+            'PacketDiag': {
+                type: 'packetdiag',
+                code: `packetdiag {
+    0-7: Source Port
+    8-15: Destination Port
+    16-31: Sequence Number
+}`
+            },
+            'RackDiag': {
+                type: 'rackdiag',
+                code: `rackdiag {
+    16U;
+    1: UPS [2U];
+    3: DB Server;
+    4: Web Server;
+    5: Web Server;
+}`
+            },
+            'Ditaa': {
+                type: 'ditaa',
+                code: `+---------+
+| Hello   |
+| World!  |
++---------+`
+            },
+            'ERD': {
+                type: 'erd',
+                code: `[Person]
+*name
+height
+weight
+
+[Company]
+*name
++employees
+
+Person *--1 Company`
+            },
+            'Nomnoml': {
+                type: 'nomnoml',
+                code: `[Pirate|eyeCount: Int|raid();pillage()|
+  [beard]--[parrot]
+  [beard]-:>[foul mouth]
+]
+
+[<abstract>Marauder]<:--[Pirate]`
+            },
+            'SvgBob': {
+                type: 'svgbob',
+                code: `       .---.
+      /-o-/--
+   .-/ / /->
+  ( *  \\/
+   '-.  \\
+      \\ /
+       '`
+            },
+            'Vega': {
+                type: 'vega',
+                code: `{
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "width": 200,
+  "height": 200,
+  "data": [{
+    "name": "table",
+    "values": [
+      {"x": 1, "y": 28}, {"x": 2, "y": 55},
+      {"x": 3, "y": 43}, {"x": 4, "y": 91}
+    ]
+  }],
+  "scales": [{
+    "name": "x", "type": "linear", "range": "width",
+    "domain": {"data": "table", "field": "x"}
+  }, {
+    "name": "y", "type": "linear", "range": "height",
+    "domain": {"data": "table", "field": "y"}
+  }],
+  "axes": [
+    {"orient": "bottom", "scale": "x"},
+    {"orient": "left", "scale": "y"}
+  ],
+  "marks": [{
+    "type": "line",
+    "from": {"data": "table"},
+    "encode": {
+      "enter": {
+        "x": {"scale": "x", "field": "x"},
+        "y": {"scale": "y", "field": "y"},
+        "stroke": {"value": "steelblue"}
+      }
+    }
+  }]
+}`
+            },
+            'WaveDrom': {
+                type: 'wavedrom',
+                code: `{
+  "signal": [
+    {"name": "clk", "wave": "p.....|..."},
+    {"name": "dat", "wave": "x.345x|=.x", "data": ["head", "body", "tail"]},
+    {"name": "req", "wave": "0.1..0|1.0"}
+  ]
+}`
+            },
+            'Pikchr': {
+                type: 'pikchr',
+                code: `box "Hello" "World!"`
+            },
+            'D2': {
+                type: 'd2',
+                code: `x -> y: hello
+y -> z: world`
+            },
+            'DBML': {
+                type: 'dbml',
+                code: `Table users {
+  id integer [primary key]
+  username varchar
+  created_at timestamp
+}
+
+Table posts {
+  id integer [primary key]
+  title varchar
+  user_id integer
+}
+
+Ref: posts.user_id > users.id`
+            },
+            'Structurizr': {
+                type: 'structurizr',
+                code: `workspace {
+    model {
+        user = person "User"
+        system = softwareSystem "System" {
+            webapp = container "Web App"
+            database = container "Database"
+        }
+        user -> webapp "Uses"
+        webapp -> database "Reads/Writes"
+    }
+    views {
+        systemContext system {
+            include *
+            autolayout lr
+        }
+    }
+}`
+            },
+            'C4-PlantUML': {
+                type: 'c4plantuml',
+                code: `@startuml
+!include C4_Context.puml
+
+Person(customer, "Customer", "A customer")
+System(system, "System", "Our system")
+
+Rel(customer, system, "Uses")
+@enduml`
+            },
+            'Bytefield': {
+                type: 'bytefield',
+                code: `(defattrs :bg-green {:fill "#a0ffa0"})
+(def boxes-per-row 8)
+(draw-column-headers)
+(draw-box "Destination" {:span 6})
+(draw-box "Src" {:span 2})`
+            },
+            'WireViz': {
+                type: 'wireviz',
+                code: `connectors:
+  X1:
+    type: Molex 22-27-2021
+    pinlabels: [GND, VCC]
+  X2:
+    type: Molex 22-27-2041
+    pinlabels: [GND, VCC, SCL, SDA]
+
+cables:
+  W1:
+    gauge: 24 AWG
+    length: 1
+    wirecount: 4
+
+connections:
+  - [X1: [1,2], W1: [1,2], X2: [1,2]]`
+            },
+            'Symbolator': {
+                type: 'symbolator',
+                code: `library IEEE;
+use IEEE.std_logic_1164.all;
+
+entity half_adder is
+  port (
+    a, b : in std_logic;
+    sum, carry : out std_logic
+  );
+end entity;`
+            },
+            'TikZ': {
+                type: 'tikz',
+                code: `\\begin{tikzpicture}
+  \\node[circle,draw] (A) at (0,0) {A};
+  \\node[circle,draw] (B) at (2,0) {B};
+  \\draw[->] (A) -- (B);
+\\end{tikzpicture}`
+            },
+            'Excalidraw': {
+                type: 'excalidraw',
+                code: `{
+  "type": "excalidraw",
+  "version": 2,
+  "elements": [{
+    "type": "rectangle",
+    "x": 100, "y": 100,
+    "width": 186, "height": 141,
+    "strokeColor": "#000000",
+    "backgroundColor": "transparent"
+  }]
+}`
+            },
+            'BPMN': {
+                type: 'bpmn',
+                code: `<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <process id="Process_1" isExecutable="false">
+    <startEvent id="StartEvent_1"/>
+  </process>
+</definitions>`
+            }
+        };
+
+        let loadedCount = 0;
+
+        function createDiagramCard(name, data) {
+            const card = document.createElement('div');
+            card.className = 'diagram-card';
+            
+            card.innerHTML = `
+                <div class="diagram-header">
+                    <div class="diagram-title">${name}</div>
+                    <div class="diagram-type">${data.type}</div>
+                </div>
+                <div class="diagram-content">
+                    <div class="loading">Loading diagram...</div>
+                </div>
+                <div class="code-section">
+                    <div class="code-header" onclick="toggleCode(this)">
+                        📄 View Source Code
+                    </div>
+                    <div class="code-content">${escapeHtml(data.code)}</div>
+                </div>
+            `;
+            
+            // Load diagram using POST request (simpler than deflate+base64)
+            setTimeout(() => loadDiagram(card, data), Math.random() * 1000);
+            
+            return card;
+        }
+
+        function loadDiagram(card, data) {
+            const content = card.querySelector('.diagram-content');
+            
+            fetch(`https://kroki.io/${data.type}/svg`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                },
+                body: data.code
+            })
+            .then(response => response.text())
+            .then(svg => {
+                content.innerHTML = svg;
+                loadedCount++;
+                document.getElementById('loaded-count').textContent = loadedCount;
+            })
+            .catch(error => {
+                content.innerHTML = `<div class="error">Failed to load diagram: ${error.message}</div>`;
+            });
+        }
+
+        function toggleCode(header) {
+            const codeContent = header.nextElementSibling;
+            codeContent.classList.toggle('show');
+            header.textContent = codeContent.classList.contains('show') 
+                ? '📄 Hide Source Code' 
+                : '📄 View Source Code';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Populate the grid
+        const grid = document.getElementById('diagram-grid');
+        Object.entries(diagrams).forEach(([name, data]) => {
+            grid.appendChild(createDiagramCard(name, data));
+        });
+    </script>
+</body>
+</html>
