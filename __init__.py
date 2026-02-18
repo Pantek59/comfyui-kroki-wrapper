@@ -85,13 +85,8 @@ class DiagramRenderNode:
                 "auto_crop": ("BOOLEAN", {
                     "default": True
                 }),
-                "background_color": (["transparent", "white", "black", "custom"],),
             },
             "optional": {
-                "custom_bg_color": ("STRING", {
-                    "default": "#ffffff",
-                    "multiline": False
-                }),
                 "kroki_url": ("STRING", {
                     "default": "https://kroki.io",
                     "multiline": False
@@ -215,25 +210,16 @@ class DiagramRenderNode:
             future = executor.submit(run_in_thread)
             return future.result()
 
-    def render_diagram(self, diagram_code, diagram_type, width, height, auto_crop, background_color, 
-                      custom_bg_color="#ffffff", kroki_url="https://kroki.io"):
+    def render_diagram(self, diagram_code, diagram_type, width, height, auto_crop,
+                      kroki_url="https://kroki.io"):
         
         # Render diagram via Kroki (get SVG)
         svg_bytes = self.render_via_kroki(diagram_code, diagram_type, kroki_url)
         svg_text = svg_bytes.decode('utf-8')
-        
-        # Determine background color
-        if background_color == "transparent":
-            bg_color = "transparent"
-        elif background_color == "white":
-            bg_color = "#ffffff"
-        elif background_color == "black":
-            bg_color = "#000000"
-        elif background_color == "custom":
-            bg_color = custom_bg_color
-        else:
-            bg_color = "#ffffff"
-        
+
+        # Use white background by default (users can specify background in diagram source)
+        bg_color = "#ffffff"
+
         # Render SVG using Playwright in a separate thread
         try:
             png_bytes = self._render_svg_sync(svg_text, width, height, bg_color)
